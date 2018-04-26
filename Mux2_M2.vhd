@@ -1,0 +1,35 @@
+--
+-- VHDL Architecture lab1_lib.Mux2.M2
+--
+-- Created:
+--          by - iceco.UNKNOWN (DESKTOP-V8M1DDA)
+--          at - 11:07:13 2018/02/ 1
+--
+-- using Mentor Graphics HDL Designer(TM) 2015.1b (Build 4)
+--
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_arith.all;
+
+ENTITY Mux2 IS
+  GENERIC (width : NATURAL RANGE 1 TO 64 := 32);
+  PORT ( In0, In1 : IN std_ulogic_vector(width - 1 DOWNTO 0);
+         Q : OUT std_ulogic_vector(width - 1 DOWNTO 0);
+         tmp : IN std_ulogic);
+END ENTITY Mux2;
+
+--
+ARCHITECTURE M2 OF Mux2 IS
+BEGIN
+PROCESS(tmp, In0, In1)  
+  BEGIN
+  CASE tmp IS
+     WHEN '0'=>
+      Q<=In0;
+     WHEN '1'=>
+      Q<=In1;
+     WHEN OTHERS=>Q<=(others => 'X');
+  END CASE;
+END PROCESS;
+END ARCHITECTURE M2;
+

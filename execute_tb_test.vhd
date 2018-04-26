@@ -1,0 +1,102 @@
+--
+-- VHDL Architecture lab1_lib.execute_tb.test
+--
+-- Created:
+--          by - iceco.UNKNOWN (DESKTOP-V8M1DDA)
+--          at - 14:04:26 2018/03/30
+--
+-- using Mentor Graphics HDL Designer(TM) 2015.1b (Build 4)
+--
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_arith.all;
+USE ieee.numeric_std.all;
+USE std.textio.all;
+use work.RV32I.all;
+
+ENTITY execute_tb IS
+END ENTITY execute_tb;
+
+--
+ARCHITECTURE test OF execute_tb IS
+  FILE test_vectors : text open read_mode is "execute_tb.txt";
+  signal left, right, extra : std_ulogic_vector(31 DOWNTO 0);
+  signal data, address, jaddr, data1, address1, jaddr1: std_ulogic_vector(31 DOWNTO 0);
+  signal Clock, jump, jump1 : std_ulogic;
+  signal rd, dest, dest1 : std_ulogic_vector(4 DOWNTO 0);
+  signal funct, dest_fun, dest_fun1 : RV32I_Op;
+  SIGNAL vecno : NATURAL := 0;
+BEGIN
+  DUV : Entity work.Execute(Structure)
+    port map(clock => clock, left => left, right => right, extra => extra, funct => funct, rd => rd, data => data, address => address, jaddr => jaddr, jump => jump, dest_fun => dest_fun, dest => dest);
+  ---------------------------------------------------------------
+    Stim : PROCESS
+      variable L : LINE;
+      variable leftv, rightv, extrav, datav, addressv, jaddrv : std_ulogic_vector(31 DOWNTO 0);
+      variable rdv, destv : std_ulogic_vector(4 DOWNTO 0);
+      variable jumpv : std_ulogic;
+      VARIABLE functv, dest_funv : Func_Name;
+    BEGIN
+      Clock <= '0';
+      wait for 40 ns;
+      readline(test_vectors, L);
+      while not endfile(test_vectors) loop
+        readline(test_vectors, L);
+        read(L, functv);
+        funct <= Ftype(functv);
+        read(L, leftv);
+        left <= leftv;
+        read(L, rightv);
+        right <= rightv;
+        read(L, extrav);
+        extra <= extrav;
+        read(L, rdv);
+        rd <= rdv;
+        read(L, datav);
+        data1 <= datav;
+        read(L, addressv);
+        address1 <= addressv;
+        read(L, jaddrv);
+        jaddr1 <= jaddrv;
+        read(L, jumpv);
+        jump1 <= jumpv;
+        read(L, destv);
+        dest1 <= destv;
+        read(L, dest_funv);
+        dest_fun1 <= Ftype(dest_funv);
+        wait for 10 ns;
+        Clock <= '1';
+        wait for 40 ns;
+        Clock <= '0';
+        wait for 50 ns;
+      end loop;
+      report "That's it";
+      std.env.finish;
+    end process;
+    -------------------------
+    Check : PROCESS(Clock)
+    begin
+      if (falling_edge(Clock)) then
+      assert data = data1
+        REPORT "ERROR: data Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+      assert address = address1
+        REPORT "ERROR: address Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+      assert jaddr = jaddr1
+        REPORT "ERROR: jaddr Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+      assert jump = jump1
+        REPORT "ERROR: jump Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+      assert dest = dest1
+        REPORT "ERROR: dest Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+      assert dest_fun = dest_fun1
+        REPORT "ERROR: dest_fun Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+        vecno <= vecno + 1;
+      end if;
+    end process;
+END ARCHITECTURE test;
+

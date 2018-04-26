@@ -1,0 +1,76 @@
+--
+-- VHDL Architecture lab1_lib.ALU_TB.TEST
+--
+-- Created:
+--          by - iceco.UNKNOWN (DESKTOP-V8M1DDA)
+--          at - 11:03:06 2018/03/23
+--
+-- using Mentor Graphics HDL Designer(TM) 2015.1b (Build 4)
+--
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_arith.all;
+USE std.textio.all;
+USE work.all;
+USE work.ALU32I.all;
+
+ENTITY ALU_TB IS
+END ENTITY ALU_TB;
+
+--
+ARCHITECTURE TEST OF ALU_TB IS
+  FILE test_vectors : text open read_mode is "alu_tb.txt";
+  signal left, right : std_ulogic_vector(31 DOWNTO 0);
+  signal data, data1: std_ulogic_vector(31 DOWNTO 0);
+  signal control : ALU_Op;
+  signal flag, flag1, clock : std_ulogic;
+  SIGNAL vecno : NATURAL := 0;
+BEGIN
+  DUV : Entity work.Execute_ALU(Behavior)
+    port map(left => left, right => right, control => control, flag => flag, Data => data);
+  --------------------------------------------------------------------------------------
+  Stim: process
+    variable L : LINE;
+    variable leftv, rightv, datav : std_ulogic_vector(31 DOWNTO 0);
+    variable flagv : std_ulogic;
+    variable controlv : Func_Name;
+      BEGIN
+      Clock <= '0';
+      wait for 40 ns;
+      readline(test_vectors, L);
+      while not endfile(test_vectors) loop
+        readline(test_vectors, L);
+        read(L, leftv);
+        left <= leftv;
+        read(L, rightv);
+        right <= rightv;
+        read(L, controlv);
+        control <= Ftype(controlv);
+        read(L, datav);
+        data1 <= datav;
+        read(L, flag);
+        flag1 <= flag;
+        wait for 10 ns;
+        Clock <= '1';
+        wait for 40 ns;
+        Clock <= '0';
+        wait for 50 ns;
+      end loop;
+      report "That's it";
+      std.env.finish;
+    end process;
+    -------------------------
+    Check : process(Clock)
+    begin
+      if (falling_edge(Clock)) then
+        ASSERT data = data1
+        REPORT "ERROR: data Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+        ASSERT flag = flag1
+        REPORT "ERROR: flag Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+        vecno <= vecno + 1;
+      END IF;
+    END PROCESS;
+END ARCHITECTURE TEST;
+

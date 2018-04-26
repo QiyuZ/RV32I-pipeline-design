@@ -1,0 +1,43 @@
+--
+-- VHDL Architecture lab1_lib.Reg_file.Behavior
+--
+-- Created:
+--          by - iceco.UNKNOWN (DESKTOP-V8M1DDA)
+--          at - 12:00:47 2018/04/12
+--
+-- using Mentor Graphics HDL Designer(TM) 2015.1b (Build 4)
+--
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_arith.all;
+
+ENTITY Reg_file IS
+  port(addressA, addressB, rd : IN std_logic_vector(4 DOWNTO 0);
+       data : IN std_logic_vector(31 DOWNTO 0);
+       clock, write : IN std_ulogic;
+       dataA, dataB : OUT std_logic_vector(31 DOWNTO 0));
+END ENTITY Reg_file;
+
+--
+ARCHITECTURE Behavior OF Reg_file IS
+  SIGNAL writeDC, readA, readB : std_logic_vector(31 DOWNTO 0);
+  SIGNAL RegOut0, RegOut1 : std_logic_vector(31 DOWNTO 0);
+  CONSTANT zero : std_logic_vector(31 DOWNTO 0) := (others => '0');
+BEGIN
+  write0 : entity work.Reg_decoder(Behavior)
+    port map (sel => rd, oneHot => writeDC , enable => write);
+  read0 : entity work.Reg_decoder(Behavior)
+    port map (sel => addressA, oneHot => readA , enable => '1');
+  read1 : entity work.Reg_decoder(Behavior)
+    port map (sel => addressB, oneHot => readB , enable => '1');    
+  -------------------------------------------------
+  RegArray : FOR i IN 0 TO 31 GENERATE
+    BEGIN
+    RegI : ENTITY work.RegReadWrite(Behavior)
+      PORT MAP(D => data, Q0 => RegOut0, Q1 => RegOut1, Clk => Clock, LE => writeDC(i), OE0 => readA(i), OE1 => readB(i));
+    END GENERATE RegArray;
+    dataA <= zero when addressA = "00000" else RegOut0;
+    dataB <= zero when addressB = "00000" else RegOut1;
+ 
+END ARCHITECTURE Behavior;
+

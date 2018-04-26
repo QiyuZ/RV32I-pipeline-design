@@ -1,0 +1,80 @@
+--
+-- VHDL Architecture lab1_lib.RF_test.tb
+--
+-- Created:
+--          by - iceco.UNKNOWN (DESKTOP-V8M1DDA)
+--          at - 14:53:26 2018/04/13
+--
+-- using Mentor Graphics HDL Designer(TM) 2015.1b (Build 4)
+--
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_arith.all;
+USE std.textio.all;
+
+ENTITY RF_test IS
+END ENTITY RF_test;
+
+--
+ARCHITECTURE tb OF RF_test IS
+  FILE test_vectors : text open read_mode is "RF_tb.txt";
+  signal addressA, addressB, rd : std_ulogic_vector(4 DOWNTO 0);
+  signal data : std_ulogic_vector(31 DOWNTO 0);
+  signal clock, write : std_ulogic;
+  signal dataA0, dataA1, dataB0, dataB1 : std_ulogic_vector(31 DOWNTO 0);
+  SIGNAL vecno : NATURAL := 0;
+BEGIN
+    DUV : Entity work.Reg_file(Behavior)
+      port map(addressA => addressA, addressB => addressB, rd => rd, data => data,
+       Clock => Clock, write => write, dataA => dataA0, dataB=>dataB0);
+   ----------------------------  
+   Stim : PROCESS
+     variable L : LINE;
+     variable ada, adb,rdval : std_ulogic_vector(4 DOWNTO 0);
+     variable dval : std_ulogic_vector(31 DOWNTO 0);
+     variable w : std_ulogic;
+     variable da, db: std_ulogic_vector(31 DOWNTO 0);
+      BEGIN
+      Clock <= '0';
+      wait for 40 ns;
+      readline(test_vectors, L);
+      while not endfile(test_vectors) loop
+        readline(test_vectors, L);
+        read(L, ada);
+        addressA <= ada;
+        read(L, adb);
+        addressB <= adb;
+        read(L, rdval);
+        rd <= rdval;
+        read(L, dval);
+        data <= dval;
+        read(L, w);
+        write <= w;
+        read(L, da);
+        dataA1 <= da;
+        read(L, db);
+        dataB1 <= db;
+        wait for 10 ns;
+        Clock <= '1';
+        wait for 40 ns;
+        Clock <= '0';
+        wait for 50 ns;
+      end loop;
+      report "That's it";
+      std.env.finish;
+    end process;
+    -------------------------
+    Check : process(Clock)
+    begin
+      if (falling_edge(Clock)) then
+        ASSERT dataA0 = dataA1
+        REPORT "ERROR: dataA Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+        ASSERT dataB0 = dataB1
+        REPORT "ERROR: dataB Incorrect output for vector " & to_string(vecno)
+        SEVERITY WARNING;
+        vecno <= vecno + 1;
+      END IF;
+    END PROCESS;
+END ARCHITECTURE tb;
+
